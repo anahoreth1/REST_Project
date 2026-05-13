@@ -22,4 +22,20 @@
 {
   "email": "test@example.com",
   "name": "John Doe"
-}```
+}
+
+
+## Frontend
+
+Install:
+* npm create vite@latest frontend
+Select React, JavaScript
+* npm install axios react-router-dom
+
+Run:
+cd frontend
+npm install
+npm run dev
+
+
+http://localhost:5173
