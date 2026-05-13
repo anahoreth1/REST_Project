@@ -23,9 +23,12 @@
   "email": "test@example.com",
   "name": "John Doe"
 }
+```
 
 
 ## Frontend
+
+### Local Run
 
 Install:
 * npm create vite@latest frontend
@@ -39,3 +42,7 @@ npm run dev
 
 
 http://localhost:5173
+
+### Cloud (via Github Actions)
+
+Every push into the brach `main` will rebuild the app at `https://anahoreth1.github.io/REST_Project/`
