@@ -1,4 +1,4 @@
-name: Deploy Vite to Pages
+name: Deploy Frontend to GitHub Pages
 
 on:
   push:
