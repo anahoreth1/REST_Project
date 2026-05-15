@@ -1,48 +1,89 @@
 # REST_Project
 
 
- * Baza danych: SQLite
- * Dokumentacja API: Swagger
- * Interfejs użytkownika: Aplikacja webowa
+Celem projektu jest implementacja rozproszonego systemu aukcyjnego opartego o architekturę REST, umożliwiającego komunikację między frontendem i backendem poprzez API.
+
+
+## Technologie
+
+- Backend: Django REST Framework  
+- Frontend: React  
+- Baza danych: SQLite
+- Dokumentacja API: (będzie dodano)
+- Docker: używany do uruchamiania backendu  
+- Wdrożenie w chmurze:
+  - backend: Render
+  - frontend: GitHub Pages  
+
  
-## Install:
 
-1. Create `.venv`
-2. `pip install django djangorestframework`
-3. `python manage.py migrate`: migracja DB
+## Uruchomienie lokalne
 
+### 1. Backend
 
-## Run: 
-`python manage.py runserver`
-
-## Check in browser:
-* http://127.0.0.1:8000/api/users/
-* Content:
+```bash
+cd backend/auction_system
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
 ```
+
+Przykład backendu po uruchomieniu:
+
+* Otwórz stronę http://127.0.0.1:8000/api/users/
+* Do pola **Content** dodaj:
+
+```json
 {
   "email": "test@example.com",
   "name": "John Doe"
 }
 ```
+* Naciśnij "Post"
 
 
-## Frontend
+### 2. Frontend
 
-### Local Run
-
-Install:
-* npm create vite@latest frontend
-Select React, JavaScript
-* npm install axios react-router-dom
-
-Run:
+```
 cd frontend
 npm install
 npm run dev
+```
+
+Przykład frontendu po uruchomieniu:
+* Otwórz stronę http://localhost:5173/REST_Project/
+* Sprawdź, czy frontend działa poprawnie
 
 
-http://localhost:5173
+### 3. Uruchomienie backendu przez Docker
 
-### Cloud (via Github Actions)
+Uruchomienie backendu przez Docker nie jest wymagane do działania projektu.  
+Jest to jedynie dodatkowa możliwość uruchomienia aplikacji w kontenerze.
 
-Every push into the brach `main` will rebuild the app at `https://anahoreth1.github.io/REST_Project/`
+```bash
+cd backend/auction_system
+docker build -t auction-backend .
+docker run -p 8000:8000 auction-backend
+```
+
+Przykład backendu po uruchomieniu przez Docker:
+
+* Otwórz stronę:
+  http://127.0.0.1:8000/api/users/
+
+* Do pola **Content** dodaj:
+
+```json
+{
+  "email": "test@example.com",
+  "name": "John Doe"
+}
+```
+* Naciśnij "Post"
+
+## Linki do chmurzy
+
+GitHub Actions realizuje automatyczne wdrożenie: każdy commit do `main` aktualizuje backend i frontend w chmurze po następnych linkach:
+
+- 🔗 Backend (API): https://rest-project-backend.onrender.com/api/
+- 🔗 Frontend: https://anahoreth1.github.io/REST_Project/
