@@ -17,7 +17,7 @@ class Auction(models.Model):
     category = models.CharField(max_length=100)
     
     # Cena Wywoławcza
-    starting_price = models.DecimalField(max_digits=10, decimal_places=2)
+    starting_price = models.DecimalField(max_digits=10, decimal_places=2, default = 0)
     
     # Aktualna najwyższa cena
     current_price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -36,3 +36,12 @@ class Auction(models.Model):
     
     def __str__(self):
         return self.name
+
+class Bid(models.Model):
+    auction = models.ForeignKey(Auction, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.auction} - {self.amount}"
+    
