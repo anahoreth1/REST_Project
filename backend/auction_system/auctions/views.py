@@ -42,7 +42,7 @@ class AuctionBiddingView(APIView):
 
         amount = serializer.validated_data["amount"]
 
-        if auction.status == 'Ended':
+        if auction.status == 'ended':
             return Response(status=status.HTTP_400_BAD_REQUEST)
         
         if amount < 0 or amount < auction.current_price:

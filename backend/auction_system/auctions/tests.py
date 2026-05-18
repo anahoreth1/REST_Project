@@ -1,3 +1,224 @@
-from django.test import TestCase
+from rest_framework.test import APITestCase
+from django.utils import timezone
+from datetime import timedelta
+from rest_framework import status
 
+from .models import Auction, Bid
 
+class AuctionTests(APITestCase):
+    def setUp(self):
+        self.auction = Auction.objects.create(
+            name="testname",
+            description="testdescription",
+            category="testcategory",
+            starting_price="100.00",
+            current_price="100.00",
+            start_date=timezone.now(),
+            end_date=timezone.now()+timedelta(days=1),
+            owner_id=1,
+            status="active"
+        )
+
+    def test_create_auction(self):
+        data = {
+            "name": "newauction",
+            "description": "newdescription",
+            "category": "newcategory",
+            "starting_price": "200.00",
+            "start_date": timezone.now().isoformat(),
+            "end_date": (timezone.now() + timedelta(days=2)).isoformat(),
+            "owner_id": 1,
+            "status": "active"
+        }
+
+        response = self.client.post(
+            "/api/auctions/",
+            data,
+            format="json"
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED
+        )
+
+        self.assertTrue(
+            Auction.objects.filter(name="newauction").exists()
+        )
+    
+    def test_get_auction_by_id(self):
+        response = self.client.get(f"/api/auctions/{self.auction.id}/")
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+        self.assertEqual(
+            response.data["name"],
+            "testname"
+        )
+    
+    def test_update_auction(self):
+        data = {
+            "name": "newauction",
+            "description": "newdescription",
+            "category": "newcategory",
+            "starting_price": "150.00",
+            "start_date": timezone.now().isoformat(),
+            "end_date": (timezone.now() + timedelta(days=3)).isoformat(),
+            "owner_id": 1,
+            "status": "active"
+        }
+
+        response = self.client.put(
+            f"/api/auctions/{self.auction.id}/",
+            data,
+            format="json"
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+        self.auction.refresh_from_db()
+
+        self.assertEqual(
+            self.auction.name,
+            "newauction"
+        )
+        self.assertEqual(
+            self.auction.description,
+            "newdescription"
+        )
+        self.assertEqual(
+            self.auction.category,
+            "newcategory"
+        )
+
+    def test_delete_auction(self):
+        response = self.client.delete(f"/api/auctions/{self.auction.id}/")
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT
+        )
+
+        exists = Auction.objects.filter(id=self.auction.id).exists()
+
+        self.assertEqual(
+            exists,
+            False
+        )
+
+class BiddingTests(APITestCase):
+    def setUp(self):
+        self.auction = Auction.objects.create(
+            name="testname",
+            description="testdescription",
+            category="testcategory",
+            starting_price="100.00",
+            current_price="100.00",
+            start_date=timezone.now(),
+            end_date=timezone.now() + timedelta(days=1),
+            owner_id=1,
+            status="active"
+        )
+    
+    def test_create_bid(self):
+        data = {
+            "amount": "150.00"
+        }
+
+        response = self.client.post(
+            f"/api/auctions/{self.auction.id}/bids/",
+            data,
+            format="json"
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+        self.assertTrue(
+            Bid.objects.filter(
+                auction=self.auction,
+                amount="150.00"
+            ).exists()
+        )
+
+    def test_wrong_amount_format(self):
+        data = {
+            "amount": "abcd"
+        }
+
+        response = self.client.post(
+            f"/api/auctions/{self.auction.id}/bids/",
+            data,
+            format="json"
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST
+        )
+    
+    def test_bid_must_be_higher_than_current_price(self):
+        data = {
+            "amount": "90.00"
+        }
+
+        response = self.client.post(
+            f"/api/auctions/{self.auction.id}/bids/",
+            data,
+            format="json"
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST
+        )
+
+    def test_bid_updates_current_price(self):
+        data = {
+            "amount": "180.00"
+        }
+
+        response = self.client.post(
+            f"/api/auctions/{self.auction.id}/bids/",
+            data,
+            format="json"
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+        self.auction.refresh_from_db()
+
+        self.assertEqual(
+            str(self.auction.current_price),
+            "180.00"
+        )
+
+    def test_cannot_bid_on_ended_auction(self):
+        self.auction.status = "ended"
+        self.auction.save()
+
+        data = {
+            "amount": "150.00"
+        }
+
+        response = self.client.post(
+            f"/api/auctions/{self.auction.id}/bids/",
+            data,
+            format="json"
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST
+        )
