@@ -52,6 +52,10 @@
 
 body {
   margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
 }
 
 #root {
@@ -64,6 +68,55 @@ body {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+}
+
+button:hover {
+  opacity: 0.93;
+}
+
+input,
+select,
+textarea {
+  background: var(--code-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  outline: none;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(156, 163, 175, 0.9);
+}
+
+select {
+  appearance: none;
+}
+
+label {
+  display: block;
+  text-align: left;
+  color: var(--text);
+}
+
+a {
+  color: var(--accent);
 }
 
 h1,

@@ -3,6 +3,9 @@ from .models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
     class Meta:
         model = User
-        fields = ["name", "email", "password"]
+        fields = ["id", "name", "email", "password", "created_at"]
+        read_only_fields = ["id", "created_at"]
