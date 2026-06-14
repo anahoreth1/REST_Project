@@ -76,7 +76,8 @@ Przykład backendu po uruchomieniu przez Docker:
 ```json
 {
   "email": "test@example.com",
-  "name": "John Doe"
+  "name": "John Doe",
+  "password": "12345678"
 }
 ```
 * Naciśnij "Post"
