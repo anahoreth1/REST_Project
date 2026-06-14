@@ -1,6 +1,9 @@
-from rest_framework import generics
+from rest_framework import generics, status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 from .models import Auction
-from .serializers import AuctionSerializer
+from .serializers import AuctionSerializer, BidSerializer
 
 # Widok do wyświetlania listy aukcji i dodawanie nowych
 class AuctionListCreateView(generics.ListCreateAPIView):
@@ -19,7 +22,7 @@ class AuctionListCreateView(generics.ListCreateAPIView):
             
         # Filtrowanie po statusie
         if status_param:
-            queryset = queryset.filter(status = status_param)
+            queryset = queryset.filter(status=status_param)
         
         
         return queryset
@@ -27,4 +30,26 @@ class AuctionListCreateView(generics.ListCreateAPIView):
 class AuctionDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Auction.objects.all()
     serializer_class = AuctionSerializer
+
+# Widok do składania ofert
+class AuctionBiddingView(APIView):
+    def post(self, request, auction_id):
+        auction = get_object_or_404(Auction, id=auction_id)
+        serializer = BidSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        amount = serializer.validated_data["amount"]
+
+        if auction.status == 'ended':
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        
+        if amount < 0 or amount < auction.current_price:
+            return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+
+        bid = serializer.save(auction=auction)
+        auction.current_price = amount
+        auction.save()
+        return Response()
 
