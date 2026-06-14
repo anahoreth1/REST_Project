@@ -5,7 +5,11 @@ from rest_framework import status
 
 from .models import Auction, Bid
 
-class AuctionTests(APITestCase):
+
+# Testy API dla obsługi aukcji
+class AuctionApiTest(APITestCase):
+
+    # Przygotowanie przykładowej aukcji
     def setUp(self):
         self.auction = Auction.objects.create(
             name="testname",
@@ -14,11 +18,12 @@ class AuctionTests(APITestCase):
             starting_price="100.00",
             current_price="100.00",
             start_date=timezone.now(),
-            end_date=timezone.now()+timedelta(days=1),
+            end_date=timezone.now() + timedelta(days=1),
             owner_id=1,
             status="active"
         )
 
+    # Test tworzenia nowej aukcji
     def test_create_auction(self):
         data = {
             "name": "newauction",
@@ -45,7 +50,24 @@ class AuctionTests(APITestCase):
         self.assertTrue(
             Auction.objects.filter(name="newauction").exists()
         )
-    
+
+    # Test pobierania listy aukcji
+    def test_get_auction_list(self):
+        response = self.client.get("/api/auctions/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+    # Test pobierania jednej aukcji
+    def test_get_single_auction(self):
+        response = self.client.get(f"/api/auctions/{self.auction.id}/")
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+    # Test pobierania aukcji po id
     def test_get_auction_by_id(self):
         response = self.client.get(f"/api/auctions/{self.auction.id}/")
 
@@ -58,7 +80,8 @@ class AuctionTests(APITestCase):
             response.data["name"],
             "testname"
         )
-    
+
+    # Test edycji aukcji
     def test_update_auction(self):
         data = {
             "name": "newauction",
@@ -97,6 +120,7 @@ class AuctionTests(APITestCase):
             "newcategory"
         )
 
+    # Test usuwania aukcji
     def test_delete_auction(self):
         response = self.client.delete(f"/api/auctions/{self.auction.id}/")
 
@@ -112,6 +136,26 @@ class AuctionTests(APITestCase):
             False
         )
 
+    # Test filtrowania aukcji po statusie
+    def test_filter_auctions_by_status(self):
+        Auction.objects.create(
+            name="Telefon",
+            description="Opis",
+            category="elektronika",
+            starting_price="800.00",
+            current_price="800.00",
+            start_date=timezone.now(),
+            end_date=timezone.now() + timedelta(days=1),
+            owner_id=2,
+            status="ended"
+        )
+
+        response = self.client.get("/api/auctions/?status=active")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+
 class BiddingTests(APITestCase):
     def setUp(self):
         self.auction = Auction.objects.create(
@@ -125,7 +169,7 @@ class BiddingTests(APITestCase):
             owner_id=1,
             status="active"
         )
-    
+
     def test_create_bid(self):
         data = {
             "amount": "150.00"
@@ -164,7 +208,7 @@ class BiddingTests(APITestCase):
             response.status_code,
             status.HTTP_400_BAD_REQUEST
         )
-    
+
     def test_bid_must_be_higher_than_current_price(self):
         data = {
             "amount": "90.00"
