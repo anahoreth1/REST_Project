@@ -40,6 +40,25 @@ class UserCreateViewById(APIView):
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    
-        
 
+class LoginView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        password = request.data.get("password")
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(
+                {"message": "Invalid email or password"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        if user.password != password:
+            return Response(
+                {"message": "Invalid email or password"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)

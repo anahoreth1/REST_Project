@@ -22,24 +22,40 @@ export default function Register() {
       return
     }
 
-    try {
-      const res = await api.post("/users/", {
-        name,
-        email,
-        password
-      })
+  try {
+    const res = await api.post("/users/", {
+      name,
+      email,
+      password
+    });
 
-      const user = res.data
+    const user = res.data;
 
-      if (user?.id) {
-        setCurrentUser(user)
-        navigate("/")
+    if (user?.id) {
+        setCurrentUser(user);
+        navigate("/");
       } else {
-        setMessage("Użytkownik utworzony. Zaloguj się poprzez email.")
+        setMessage("Użytkownik utworzony. Zaloguj się poprzez email.");
       }
-    } catch (err) {
-      setError("Nie udało się zarejestrować. Sprawdź dane i spróbuj ponownie.")
+  } catch (err) {
+    if (err.response) {
+      switch (err.response.status) {
+        case 400:
+          setError("Nieprawidłowe dane.");
+          break;
+        case 409:
+          setError("Użytkownik z takim emailem już istnieje.");
+          break;
+        case 500:
+          setError("Błąd serwera. Spróbuj później.");
+          break;
+        default:
+          setError("Nie udało się zarejestrować.");
+      }
+    } else {
+      setError("Brak połączenia z serwerem.");
     }
+  }
   }
 
   return (

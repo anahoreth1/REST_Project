@@ -8,6 +8,7 @@ function LoginPage() {
   const [users, setUsers] = useState([])
   const [email, setEmail] = useState("")
   const [error, setError] = useState(null)
+  const [password, setPassword] = useState("")
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -22,17 +23,25 @@ function LoginPage() {
     loadUsers()
   }, [])
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    const user = users.find((item) => item.email.toLowerCase() === email.toLowerCase())
+    setError(null)
 
-    if (!user) {
-      setError("Nie znaleziono użytkownika z tym adresem email.")
-      return
+    try {
+      const response = await api.post("/users/login/", {
+        email,
+        password
+      })
+
+      setCurrentUser(response.data)
+      navigate("/")
+    } catch (err) {
+      if (err.response?.status === 401) {
+        setError("Nieprawidłowy email lub hasło.")
+      } else {
+        setError("Nie udało się zalogować.")
+      }
     }
-
-    setCurrentUser(user)
-    navigate("/")
   }
 
   return (
@@ -46,6 +55,13 @@ function LoginPage() {
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          style={styles.input}
+        />
+        <input
+          type="password"
+          placeholder="Hasło"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           style={styles.input}
         />
         <button type="submit" style={styles.button}>Zaloguj się</button>
