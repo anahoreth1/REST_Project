@@ -45,6 +45,8 @@ Przykład backendu po uruchomieniu:
 
 ### 2. Frontend
 
+Przed uruchomieniem frontendu lokalnie należy utworzyć plik `.env` w folderze `frontend` na podstawie pliku `.env.example`.
+
 ```
 cd frontend
 npm install
@@ -89,9 +91,3 @@ GitHub Actions realizuje automatyczne wdrożenie: każdy commit do `main` aktual
 
 - 🔗 Backend (API): https://rest-project-backend.onrender.com/api/
 - 🔗 Frontend: https://anahoreth1.github.io/REST_Project/
-
-## Frontend lokalnie
-
-Przed uruchomieniem frontendu lokalnie należy utworzyć plik `.env` w folderze `frontend` na podstawie pliku `.env.example`.
-
-

@@ -155,6 +155,7 @@ function HomePage() {
         description: editData.description,
         category: editData.category,
         starting_price: parseFloat(editData.starting_price),
+        owner_id: currentUser.id,
         start_date: editData.start_date,
         end_date: editData.end_date
       })
