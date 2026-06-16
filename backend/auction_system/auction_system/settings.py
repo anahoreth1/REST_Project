@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     "users",
     "corsheaders",
     "auctions",
-    "drf_spectacular"
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
@@ -129,11 +129,9 @@ STATIC_URL = "static/"
 CORS_ALLOW_ALL_ORIGINS = True
 
 
-REST_FRAMEWORK = {
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema"
-}
+REST_FRAMEWORK = {"DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema"}
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "Auction System API",
-    "DESCRIPTION": "API documentation for auction system backend."
+    "DESCRIPTION": "API documentation for auction system backend.",
 }
