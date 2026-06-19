@@ -4,31 +4,46 @@
 Celem projektu jest implementacja rozproszonego systemu aukcyjnego opartego o architekturę REST, umożliwiającego komunikację między frontendem i backendem poprzez API.
 
 
-## Technologie
+## Spis treści
+
+1. Technologie
+2. Funkcjonalności
+3. Uruchomienie lokalne
+4. Uruchomienie backendu przez Docker
+5. Wdrożenie aplikacji w chmurze
+
+
+## 1. Technologie
 
 - Backend: Django REST Framework  
 - Frontend: React  
 - Baza danych: SQLite
-- Dokumentacja API: (będzie dodano)
-- Docker: używany do uruchamiania backendu  
+- Dokumentacja API: 
+  - Swagger (/api/docs/)
+  - OpenAPI Schema (/api/schema/)
+  - ReDoc (/api/redoc/)
+  -  bardziej szczegółowa dokumentacja (np. ERD) znajduje się w folderze [docs](https://github.com/anahoreth1/REST_Project/tree/main/docs)
+- Docker: używany do uruchamiania backendu
 - Wdrożenie w chmurze:
-  - backend: Render
+  - backend: platforma Render ([link](https://render.com/))
   - frontend: GitHub Pages  
 
-## Funkcjonalności
 
-- rejestracja i logowanie użytkownika,
-- tworzenie, pobieranie, edycja i usuwanie aukcji,
-- filtrowanie aukcji po kategorii i statusie,
-- składanie ofert na aukcje,
-- walidacja dat aukcji (`start_date` musi być wcześniejsze niż `end_date`),
-- automatyczne ustawianie statusu aukcji (`planned`, `active`, `ended`),
-- blokada składania ofert przed rozpoczęciem aukcji.
- 
+## 2. Funkcjonalności
 
-## Uruchomienie lokalne
+- Rejestracja i logowanie użytkownika
+- Tworzenie, pobieranie, edycja i usuwanie aukcji
+- Filtrowanie aukcji po kategorii i statusie
+- Składanie ofert na aukcje
+- Automatyczne ustawianie statusu aukcji (`planned`, `active`, `ended`)
+- Blokada składania ofert przed rozpoczęciem aukcji oraz po jej zakończeniu
+- Walidacja danych (np. dla aukcji pole `start_date` musi być wcześniejsze niż `end_date`)
+- Testy jednostkowe
 
-### 1. Backend
+
+## 3. Uruchomienie lokalne
+
+### 3.1. Backend
 
 ```bash
 cd backend/auction_system
@@ -49,10 +64,10 @@ Przykład backendu po uruchomieniu:
   "password": "12345678"
 }
 ```
-* Naciśnij "Post"
+* Naciśnij przycisk "Post"
 
 
-### 2. Frontend
+### 3.2. Frontend
 
 Przed uruchomieniem frontendu lokalnie należy utworzyć plik `.env` w folderze `frontend` na podstawie pliku `.env.example`.
 
@@ -67,10 +82,9 @@ Przykład frontendu po uruchomieniu:
 * Sprawdź, czy frontend działa poprawnie
 
 
-### 3. Uruchomienie backendu przez Docker
+### 4. Uruchomienie backendu przez Docker
 
-Uruchomienie backendu przez Docker nie jest wymagane do działania projektu.  
-Jest to jedynie dodatkowa możliwość uruchomienia aplikacji w kontenerze.
+Uruchomienie backendu za pomocą Dockera stanowi dodatkową możliwość uruchomienia aplikacji w kontenerze.
 
 ```bash
 cd backend/auction_system
@@ -92,11 +106,29 @@ Przykład backendu po uruchomieniu przez Docker:
   "password": "12345678"
 }
 ```
-* Naciśnij "Post"
+* Naciśnij przycisk "Post"
 
-## Linki do chmury
 
-GitHub Actions realizuje automatyczne wdrożenie: każdy commit do `main` aktualizuje backend i frontend w chmurze po następnych linkach:
+## 5. Wdrożenie aplikacji w chmurze
 
-- 🔗 Backend (API): https://rest-project-backend.onrender.com/api/
-- 🔗 Frontend: https://anahoreth1.github.io/REST_Project/
+GitHub Actions realizuje automatyczne wdrażanie aplikacji (workflow jest dostępny tutaj: [link](https://github.com/anahoreth1/REST_Project/tree/main/.github/workflows)). 
+
+Każdy commit do gałęzi `main` powoduje automatyczną aktualizację backendu i frontendu w chmurze.
+
+* Frontend: https://anahoreth1.github.io/REST_Project/
+* Backend (API): https://rest-project-backend.onrender.com/api/
+
+Przykład działania backendu w chmurze:
+
+* Otwórz stronę https://rest-project-backend.onrender.com/api/
+* Do pola **Content** dodaj:
+
+```json
+{
+  "email": "test@example.com",
+  "name": "John Doe",
+  "password": "12345678"
+}
+```
+
+* Naciśnij przycisk ""POST".

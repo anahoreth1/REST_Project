@@ -25,9 +25,14 @@ function Navbar() {
       <div style={styles.links}>
         <Link to="/">Główna</Link>
         {currentUser ? (
-          <button type="button" style={styles.button} onClick={handleLogout}>
-            Logout
-          </button>
+          <>
+            <Link to="/profile" style={styles.linkButton}>
+              Mój profil
+            </Link>
+            <button type="button" style={styles.button} onClick={handleLogout}>
+              Logout
+            </button>
+          </>
         ) : (
           <>
             <Link to="/login">Login</Link>
@@ -54,6 +59,18 @@ const styles = {
     display: "flex",
     gap: "15px",
     alignItems: "center"
+  },
+  linkButton: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "6px 12px",
+    border: "1px solid var(--border)",
+    borderRadius: "10px",
+    background: "var(--bg)",
+    color: "var(--text)",
+    textDecoration: "none",
+    cursor: "pointer"
   },
   user: {
     margin: 0,

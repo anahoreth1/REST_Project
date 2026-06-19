@@ -29,7 +29,7 @@ class UserCreateViewById(APIView):
 
     def put(self, request, user_id):
         user = get_object_or_404(User, id=user_id)
-        serializer = UserSerializer(user, data=request.data)
+        serializer = UserSerializer(user, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
@@ -53,13 +53,13 @@ class LoginView(APIView):
         except User.DoesNotExist:
             return Response(
                 {"message": "Invalid email or password"},
-                status=status.HTTP_401_UNAUTHORIZED
+                status=status.HTTP_401_UNAUTHORIZED,
             )
 
         if user.password != password:
             return Response(
                 {"message": "Invalid email or password"},
-                status=status.HTTP_401_UNAUTHORIZED
+                status=status.HTTP_401_UNAUTHORIZED,
             )
 
         serializer = UserSerializer(user)

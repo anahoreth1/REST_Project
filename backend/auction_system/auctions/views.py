@@ -1,24 +1,22 @@
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.utils import timezone
 
-from .models import Auction
+from .models import Auction, Bid
 from .serializers import AuctionSerializer, BidSerializer
 
-def close_expired_auctions():
-    Auction.objects.filter(
-        status="active",
-        end_date__lte=timezone.now()
-    ).update(status="ended")
+
+def update_auctions():
+    for auction in Auction.objects.all():
+        auction.update_status()
+
 
 class AuctionListCreateView(generics.ListCreateAPIView):
     serializer_class = AuctionSerializer
 
     def get_queryset(self):
-        close_expired_auctions()
+        update_auctions()
 
         queryset = Auction.objects.all()
 
@@ -38,7 +36,7 @@ class AuctionDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AuctionSerializer
 
     def get_queryset(self):
-        close_expired_auctions()
+        update_auctions()
 
         queryset = Auction.objects.all()
 
@@ -57,16 +55,22 @@ class AuctionDetailView(generics.RetrieveUpdateDestroyAPIView):
         return queryset
 
 
-class AuctionBiddingView(APIView):
-    def post(self, request, auction_id):
-        close_expired_auctions()
-
+# Widok do obsługi listowania i składania ofert
+# (obsługa `GET /auctions/{id}/bids` i `POST /auctions/{id}/bids`)
+class BidListCreateView(APIView):
+    def get(self, request, auction_id):
         auction = get_object_or_404(Auction, id=auction_id)
-        if auction.status == "ended":
-            return Response(
-                {"error": "Ta aukcja już się zakończyła."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+
+        bids = Bid.objects.filter(auction=auction).order_by("-created_at")
+
+        serializer = BidSerializer(bids, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request, auction_id):
+        auction = get_object_or_404(Auction, id=auction_id)
+
+        auction.update_status()
 
         serializer = BidSerializer(data=request.data)
 
@@ -74,28 +78,24 @@ class AuctionBiddingView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         amount = serializer.validated_data["amount"]
-        now = timezone.now()
 
-        if auction.status == "ended":
+        # aukcja nie jest aktywna
+        if auction.status != "active":
             return Response(
-                {"error": "Aukcja została zakończona."},
+                {"detail": "Aukcja nie jest aktywna."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if auction.status == "planned" or now < auction.start_date:
+        # oferta za niska
+        if amount <= auction.current_price:
             return Response(
-                {"error": "Nie można składać ofert przed rozpoczęciem aukcji."},
+                {"detail": "Oferta musi być wyższa niż aktualna cena."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if amount < 0 or amount <= auction.current_price:
-            return Response(
-                {"error": "Oferta musi być większa od aktualnej ceny."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        bid = serializer.save(auction=auction)
 
-        serializer.save(auction=auction)
         auction.current_price = amount
-        auction.save()
+        auction.save(update_fields=["current_price"])
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(BidSerializer(bid).data, status=status.HTTP_201_CREATED)

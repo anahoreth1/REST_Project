@@ -23,6 +23,7 @@ function HomePage() {
   })
   const [formMessage, setFormMessage] = useState("")
   const [createMessage, setCreateMessage] = useState("")
+  const [auctionBids, setAuctionBids] = useState({})
 
   const categories = useMemo(() => {
     const allCategories = auctions.map((auction) => auction.category)
@@ -37,9 +38,44 @@ function HomePage() {
     return filtered
   }, [auctions, activeTab, currentUser])
 
+  const getStatusBadgeStyle = (status) => {
+    if (status === "active") return styles.activeStatus
+    if (status === "ended") return styles.endedStatus
+    if (status === "scheduled") return styles.scheduledStatus
+    return styles.status
+  }
+
   useEffect(() => {
     fetchAuctions()
   }, [categoryFilter, statusFilter])
+
+  useEffect(() => {
+    if (!createMessage && !formMessage) return
+
+    const timer = setTimeout(() => {
+      setCreateMessage("")
+      setFormMessage("")
+    }, 3000)
+
+    return () => clearTimeout(timer)
+  }, [createMessage, formMessage])
+
+  const fetchAuctionBids = async (auctionList) => {
+    const bidsByAuction = {}
+
+    await Promise.all(
+      auctionList.map(async (auction) => {
+        try {
+          const response = await api.get(`/auctions/${auction.id}/bids/`)
+          bidsByAuction[auction.id] = response.data
+        } catch (err) {
+          bidsByAuction[auction.id] = []
+        }
+      })
+    )
+
+    setAuctionBids(bidsByAuction)
+  }
 
   const fetchAuctions = async () => {
     setLoading(true)
@@ -52,6 +88,7 @@ function HomePage() {
 
       const response = await api.get("/auctions/", { params })
       setAuctions(response.data)
+      await fetchAuctionBids(response.data)
     } catch (err) {
       setError("Nie udało się pobrać aukcji.")
     } finally {
@@ -76,7 +113,10 @@ function HomePage() {
     }
 
     try {
-      await api.post(`/auctions/${auctionId}/bids/`, { amount })
+      await api.post(`/auctions/${auctionId}/bids/`, {
+        amount,
+        user_email: currentUser.email
+      })
       setFormMessage("Oferta została przyjęta.")
       fetchAuctions()
       setBidAmounts((prev) => ({ ...prev, [auctionId]: "" }))
@@ -251,6 +291,7 @@ function HomePage() {
                 <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                   <option value="">Wszystkie</option>
                   <option value="active">Active</option>
+                  <option value="scheduled">Scheduled</option>
                   <option value="ended">Ended</option>
                 </select>
               </label>
@@ -267,7 +308,7 @@ function HomePage() {
                 <article key={auction.id} style={styles.card}>
                   <div style={styles.cardHeader}>
                     <h2>{auction.name}</h2>
-                    <span style={styles.status}>{auction.status}</span>
+                    <span style={{ ...styles.status, ...getStatusBadgeStyle(auction.status) }}>{auction.status}</span>
                   </div>
                   <p>{auction.description}</p>
                   <p>
@@ -294,17 +335,43 @@ function HomePage() {
                       placeholder="Kwota"
                       value={bidAmounts[auction.id] || ""}
                       onChange={(e) => handleBidChange(auction.id, e.target.value)}
-                      disabled={auction.status === "ended"}
+                      disabled={auction.status !== "active"}
                       style={styles.bidInput}
                     />
                     <button
                       type="button"
                       onClick={() => handleBidSubmit(auction.id)}
-                      disabled={auction.status === "ended"}
+                      disabled={auction.status !== "active"}
                       style={styles.bidButton}
                     >
                       Złóż ofertę
                     </button>
+                  </div>
+                  {(auction.status === "ended" || auction.status === "scheduled") && (
+                    <p style={styles.statusNotice}>
+                      {auction.status === "ended"
+                        ? "Aukcja zakończona. Nie można składać ofert."
+                        : "Aukcja jeszcze się nie rozpoczęła."}
+                    </p>
+                  )}
+
+                  <div style={styles.bidHistory}>
+                    <h3>Historia ofert</h3>
+                    {auctionBids[auction.id] && auctionBids[auction.id].length > 0 ? (
+                      <ul style={styles.bidHistoryList}>
+                        {auctionBids[auction.id].map((bid) => (
+                          <li key={bid.id} style={styles.bidHistoryItem}>
+                            <div style={styles.bidHistoryMeta}>
+                              <span>{new Date(bid.created_at).toLocaleString()}</span>
+                              <span style={styles.bidHistoryEmail}>{bid.user_email}</span>
+                            </div>
+                            <strong style={styles.bidHistoryAmount}>{bid.amount}</strong>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p style={styles.noBids}>Brak ofert w historii.</p>
+                    )}
                   </div>
                 </article>
               ))
@@ -406,7 +473,7 @@ function HomePage() {
                         <>
                           <div style={styles.cardHeader}>
                             <h2>{auction.name}</h2>
-                            <span style={styles.status}>{auction.status}</span>
+                            <span style={{ ...styles.status, ...getStatusBadgeStyle(auction.status) }}>{auction.status}</span>
                           </div>
                           <p>{auction.description}</p>
                           <p>
@@ -437,6 +504,25 @@ function HomePage() {
                             >
                               Usuń
                             </button>
+                          </div>
+
+                          <div style={styles.bidHistory}>
+                            <h3>Historia ofert</h3>
+                            {auctionBids[auction.id] && auctionBids[auction.id].length > 0 ? (
+                              <ul style={styles.bidHistoryList}>
+                                {auctionBids[auction.id].map((bid) => (
+                                  <li key={bid.id} style={styles.bidHistoryItem}>
+                                    <div style={styles.bidHistoryMeta}>
+                                      <span>{new Date(bid.created_at).toLocaleString()}</span>
+                                      <span style={styles.bidHistoryEmail}>{bid.user_email}</span>
+                                    </div>
+                                    <strong style={styles.bidHistoryAmount}>{bid.amount}</strong>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p style={styles.noBids}>Brak ofert w historii.</p>
+                            )}
                           </div>
                         </>
                       )}
@@ -620,6 +706,68 @@ const styles = {
     background: "var(--border)",
     textTransform: "capitalize",
     fontSize: "0.9rem"
+  },
+  activeStatus: {
+    background: "#d1fae5",
+    color: "#065f46"
+  },
+  scheduledStatus: {
+    background: "#e0f2fe",
+    color: "#0c4a6e"
+  },
+  endedStatus: {
+    background: "#fee2e2",
+    color: "#991b1b"
+  },
+  statusNotice: {
+    marginTop: "10px",
+    color: "#92400e",
+    backgroundColor: "#fef3c7",
+    padding: "10px",
+    borderRadius: "8px",
+    border: "1px solid #fde68a"
+  },
+  bidHistory: {
+    marginTop: "16px",
+    padding: "14px",
+    background: "rgba(236, 253, 245, 0.85)",
+    borderRadius: "10px",
+    border: "1px solid #d1fae5"
+  },
+  bidHistoryList: {
+    listStyle: "none",
+    margin: 0,
+    padding: 0,
+    display: "grid",
+    gap: "10px"
+  },
+  bidHistoryItem: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: "12px",
+    padding: "10px 0",
+    borderBottom: "1px solid #eee",
+  },
+  bidHistoryMeta: {
+    display: "grid",
+    gap: "4px",
+    minWidth: 0,
+  },
+  bidHistoryEmail: {
+    fontSize: "0.95rem",
+    color: "var(--text-secondary)",
+    overflowWrap: "anywhere"
+  },
+  bidHistoryAmount: {
+    marginTop: "4px",
+    fontWeight: "700",
+    color: "var(--text)",
+    whiteSpace: "nowrap"
+  },
+  noBids: {
+    margin: 0,
+    color: "var(--text-secondary)"
   },
   bidRow: {
     display: "flex",
