@@ -25,7 +25,6 @@ class UserCreateViewTest(APITestCase):
 
         self.assertNotIn("password", response.data)
 
-
     def test_create_user_without_name(self):
 
         data = {"name": "", "email": "test@example.com", "password": "Password123"}
@@ -33,7 +32,7 @@ class UserCreateViewTest(APITestCase):
         response = self.client.post("/api/users/", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-    
+
     def test_create_user_without_password(self):
         data = {"name": "Name", "email": "test@example.com", "password": ""}
 
@@ -42,7 +41,7 @@ class UserCreateViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_user_without_email(self):
-        
+
         data = {"name": "", "email": "", "password": "Password123"}
 
         response = self.client.post("/api/users/", data, format="json")
@@ -59,20 +58,22 @@ class UserCreateViewTest(APITestCase):
 
     def test_create_user_with_duplicated_email(self):
         User.objects.create(
-        name="firstuser",
-        email="test@example.com",
-        password="Password123",
-    )
+            name="firstuser",
+            email="test@example.com",
+            password="Password123",
+        )
 
         data = {
-            "name": "seconduser", "email": "test@example.com", "password": "AnotherPassword123",
+            "name": "seconduser",
+            "email": "test@example.com",
+            "password": "AnotherPassword123",
         }
 
         response = self.client.post("/api/users/", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(User.objects.filter(email="test@example.com").count(), 1)
-    
+
 
 class UserViewDetailTest(APITestCase):
     def setUp(self):
@@ -121,7 +122,7 @@ class UserViewDetailTest(APITestCase):
             "password": "updatedpassword",
         }
 
-        response = self.client.put(f"/api/users/99999/", data, format="json")
+        response = self.client.put("/api/users/99999/", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -135,7 +136,7 @@ class UserViewDetailTest(APITestCase):
         response = self.client.put(f"/api/users/{self.user.id}/", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-    
+
     def test_update_user_with_no_email(self):
         data = {
             "name": "updatedname",
@@ -157,7 +158,7 @@ class UserViewDetailTest(APITestCase):
         response = self.client.put(f"/api/users/{self.user.id}/", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-    
+
     def test_update_user_with_no_name(self):
         data = {
             "name": "",
@@ -177,6 +178,6 @@ class UserViewDetailTest(APITestCase):
         self.assertFalse(User.objects.filter(id=self.user.id).exists())
 
     def test_delete_user_that_dont_exist(self):
-        response = self.client.delete(f"/api/users/99999/")
+        response = self.client.delete("/api/users/99999/")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

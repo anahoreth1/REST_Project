@@ -4,15 +4,22 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('auctions', '0002_alter_auction_starting_price_bid'),
+        ("auctions", "0002_alter_auction_starting_price_bid"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='auction',
-            name='status',
-            field=models.CharField(choices=[('planned', 'Planned'), ('active', 'Active'), ('ended', 'Ended')], default='planned', max_length=20),
+            model_name="auction",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("planned", "Planned"),
+                    ("active", "Active"),
+                    ("ended", "Ended"),
+                ],
+                default="planned",
+                max_length=20,
+            ),
         ),
     ]

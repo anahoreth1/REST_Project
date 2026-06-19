@@ -1,5 +1,4 @@
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -9,8 +8,8 @@ from .serializers import AuctionSerializer, BidSerializer
 
 
 def update_auctions():
-     for auction in Auction.objects.all():
-            auction.update_status()
+    for auction in Auction.objects.all():
+        auction.update_status()
 
 
 class AuctionListCreateView(generics.ListCreateAPIView):
