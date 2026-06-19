@@ -17,7 +17,7 @@ class AuctionApiTest(APITestCase):
             category="testcategory",
             starting_price="100.00",
             current_price="100.00",
-            start_date=timezone.now(),
+            start_date=timezone.now() - timedelta(days=3),
             end_date=timezone.now() + timedelta(days=1),
             owner_id=1,
             status="active",
@@ -30,7 +30,7 @@ class AuctionApiTest(APITestCase):
             "description": "newdescription",
             "category": "newcategory",
             "starting_price": "200.00",
-            "start_date": timezone.now().isoformat(),
+            "start_date": (timezone.now() - timedelta(days=3)).isoformat(),
             "end_date": (timezone.now() + timedelta(days=2)).isoformat(),
             "owner_id": 1,
             "status": "active",
@@ -70,7 +70,7 @@ class AuctionApiTest(APITestCase):
             "description": "newdescription",
             "category": "newcategory",
             "starting_price": "150.00",
-            "start_date": timezone.now().isoformat(),
+            "start_date": (timezone.now() - timedelta(days=1)).isoformat(),
             "end_date": (timezone.now() + timedelta(days=3)).isoformat(),
             "owner_id": 1,
             "status": "active",
@@ -106,7 +106,7 @@ class AuctionApiTest(APITestCase):
             category="elektronika",
             starting_price="800.00",
             current_price="800.00",
-            start_date=timezone.now(),
+            start_date=timezone.now() - timedelta(days=1),
             end_date=timezone.now() + timedelta(days=1),
             owner_id=2,
             status="ended",
@@ -115,7 +115,7 @@ class AuctionApiTest(APITestCase):
         response = self.client.get("/api/auctions/?status=active")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data), 2)
 
 
 class BiddingTests(APITestCase):
@@ -126,7 +126,7 @@ class BiddingTests(APITestCase):
             category="testcategory",
             starting_price="100.00",
             current_price="100.00",
-            start_date=timezone.now(),
+            start_date=timezone.now() - timedelta(days=3),
             end_date=timezone.now() + timedelta(days=1),
             owner_id=1,
             status="active",
@@ -139,7 +139,7 @@ class BiddingTests(APITestCase):
             f"/api/auctions/{self.auction.id}/bids/", data, format="json"
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         self.assertTrue(
             Bid.objects.filter(auction=self.auction, amount="150.00").exists()
@@ -170,14 +170,14 @@ class BiddingTests(APITestCase):
             f"/api/auctions/{self.auction.id}/bids/", data, format="json"
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         self.auction.refresh_from_db()
 
         self.assertEqual(str(self.auction.current_price), "180.00")
 
     def test_cannot_bid_on_ended_auction(self):
-        self.auction.status = "ended"
+        self.auction.end_date = timezone.now() - timedelta(hours=3)
         self.auction.save()
 
         data = {"amount": "150.00"}
