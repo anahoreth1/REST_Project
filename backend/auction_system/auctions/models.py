@@ -1,9 +1,14 @@
 from django.db import models
+from django.utils import timezone
 
 
 class Auction(models.Model):
     # Dostępne statusy aukcji
-    STATUS_CHOICES = [("active", "Active"), ("ended", "Ended")]
+    STATUS_CHOICES = [
+        ("planned", "Planned"),
+        ("active", "Active"),
+        ("ended", "Ended"),
+    ]
 
     # Nazwa przedmiotu
     name = models.CharField(max_length=255)
@@ -14,7 +19,7 @@ class Auction(models.Model):
     # Kategoria
     category = models.CharField(max_length=100)
 
-    # Cena Wywoławcza
+    # Cena wywoławcza
     starting_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     # Aktualna najwyższa cena
@@ -30,7 +35,21 @@ class Auction(models.Model):
     owner_id = models.IntegerField()
 
     # Status aukcji
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="planned")
+
+    def update_status(self):
+        now = timezone.now()
+
+        if now < self.start_date:
+            self.status = "planned"
+        elif now > self.end_date:
+            self.status = "ended"
+        else:
+            self.status = "active"
+
+    def save(self, *args, **kwargs):
+        self.update_status()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name

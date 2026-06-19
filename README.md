@@ -15,6 +15,15 @@ Celem projektu jest implementacja rozproszonego systemu aukcyjnego opartego o ar
   - backend: Render
   - frontend: GitHub Pages  
 
+## Funkcjonalności
+
+- rejestracja i logowanie użytkownika,
+- tworzenie, pobieranie, edycja i usuwanie aukcji,
+- filtrowanie aukcji po kategorii i statusie,
+- składanie ofert na aukcje,
+- walidacja dat aukcji (`start_date` musi być wcześniejsze niż `end_date`),
+- automatyczne ustawianie statusu aukcji (`planned`, `active`, `ended`),
+- blokada składania ofert przed rozpoczęciem aukcji.
  
 
 ## Uruchomienie lokalne
@@ -85,7 +94,7 @@ Przykład backendu po uruchomieniu przez Docker:
 ```
 * Naciśnij "Post"
 
-## Linki do chmurzy
+## Linki do chmury
 
 GitHub Actions realizuje automatyczne wdrożenie: każdy commit do `main` aktualizuje backend i frontend w chmurze po następnych linkach:
 
