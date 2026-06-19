@@ -9,21 +9,25 @@ Celem projektu jest implementacja rozproszonego systemu aukcyjnego opartego o ar
 - Backend: Django REST Framework  
 - Frontend: React  
 - Baza danych: SQLite
-- Dokumentacja API: (będzie dodano)
-- Docker: używany do uruchamiania backendu  
+- Dokumentacja API: 
+  - Swagger (http://127.0.0.1:8000/api/docs/)
+  - OpenAPI Schema (http://127.0.0.1:8000/api/schema/)
+  - ReDoc (http://127.0.0.1:8000//api/redoc/)
+  - szczególna dokumentacja w folderze [docs](https://github.com/anahoreth1/REST_Project/tree/main/docs)
+- Docker: używany do uruchamiania backendu
 - Wdrożenie w chmurze:
-  - backend: Render
+  - backend: platforma Render ([link](https://render.com/))
   - frontend: GitHub Pages  
 
 ## Funkcjonalności
 
-- rejestracja i logowanie użytkownika,
-- tworzenie, pobieranie, edycja i usuwanie aukcji,
-- filtrowanie aukcji po kategorii i statusie,
-- składanie ofert na aukcje,
-- walidacja dat aukcji (`start_date` musi być wcześniejsze niż `end_date`),
-- automatyczne ustawianie statusu aukcji (`planned`, `active`, `ended`),
-- blokada składania ofert przed rozpoczęciem aukcji.
+- rejestracja i logowanie użytkownika
+- tworzenie, pobieranie, edycja i usuwanie aukcji
+- filtrowanie aukcji po kategorii i statusie
+- składanie ofert na aukcje
+- walidacja dat aukcji (`start_date` musi być wcześniejsze niż `end_date`)
+- automatyczne ustawianie statusu aukcji (`planned`, `active`, `ended`)
+- blokada składania ofert przed rozpoczęciem aukcji
  
 
 ## Uruchomienie lokalne
