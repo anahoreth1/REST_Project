@@ -1,5 +1,4 @@
 from django.db import models
-from django.utils import timezone
 
 
 class Auction(models.Model):
@@ -36,20 +35,6 @@ class Auction(models.Model):
 
     # Status aukcji
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="planned")
-
-    def update_status(self):
-        now = timezone.now()
-
-        if now < self.start_date:
-            self.status = "planned"
-        elif now > self.end_date:
-            self.status = "ended"
-        else:
-            self.status = "active"
-
-    def save(self, *args, **kwargs):
-        self.update_status()
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
