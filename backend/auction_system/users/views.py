@@ -1,3 +1,4 @@
+from django.contrib.auth.hashers import check_password
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
@@ -52,13 +53,13 @@ class LoginView(APIView):
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             return Response(
-                {"message": "Invalid email or password"},
-                status=status.HTTP_401_UNAUTHORIZED,
+                {"message": "Invalid email"},
+                status=status.HTTP_404_NOT_FOUND,
             )
-
-        if user.password != password:
+        
+        if not check_password(password, user.password):
             return Response(
-                {"message": "Invalid email or password"},
+                {"message": "Invalid password"},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 

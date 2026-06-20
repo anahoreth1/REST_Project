@@ -1,7 +1,11 @@
+from django.contrib.auth.hashers import check_password, make_password
+from django.utils import timezone
+
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from .models import User
+from .serializers import UserSerializer
 
 
 class UserCreateViewTest(APITestCase):
@@ -181,3 +185,73 @@ class UserViewDetailTest(APITestCase):
         response = self.client.delete("/api/users/99999/")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class LoginViewTests(APITestCase):
+    def setUp(self): 
+        self.user = User.objects.create(
+            email="test@example.com",
+            password=make_password("Password123"),
+            name="Test User",
+        )
+
+    def test_login_success(self):
+        response = self.client.post(
+            "/api/users/login/",
+            {
+                "email": "test@example.com",
+                "password": "Password123",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["email"], self.user.email)
+
+    def test_login_with_wrong_password(self):
+        response = self.client.post(
+            "/api/users/login/",
+            {
+                "email": "test@example.com",
+                "password": "WrongPassword",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data,
+            {"message": "Invalid password"},
+        )
+
+    def test_login_with_nonexistent_email(self):
+        response = self.client.post(
+            "/api/users/login/",
+            {
+                "email": "unknown@example.com",
+                "password": "Password123",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data,
+            {"message": "Invalid email"},
+        )
+
+    def test_password_is_hashed(self):
+        raw_password = "Password123" 
+        serializer = UserSerializer(data={
+            "name": "Test User",
+            "email": "test1@example.com",
+            "password": raw_password,
+        })
+
+        self.assertTrue(serializer.is_valid())
+        user = serializer.save()
+        
+        # password is not raw
+        self.assertNotEqual(user.password, raw_password)
+
+        self.assertTrue(check_password(raw_password, user.password))
