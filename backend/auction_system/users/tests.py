@@ -221,7 +221,7 @@ class LoginViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
             response.data,
-            {"message": "Invalid email or password"},
+            {"message": "Invalid password"},
         )
 
     def test_login_with_nonexistent_email(self):
@@ -237,7 +237,7 @@ class LoginViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(
             response.data,
-            {"message": "Invalid email or password"},
+            {"message": "Invalid email"},
         )
 
     def test_password_is_hashed(self):
