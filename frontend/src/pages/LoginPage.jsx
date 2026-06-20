@@ -36,10 +36,13 @@ function LoginPage() {
       setCurrentUser(response.data)
       navigate("/")
     } catch (err) {
-      if (err.response?.status === 401) {
-        setError("Nieprawidłowy email lub hasło.")
+      const status = err.response?.status;
+      if (status === 401) {
+        setError("Nieprawidłowe hasło.");
+      } else if (status === 404) {
+        setError("Użytkownik nie istnieje.");
       } else {
-        setError("Nie udało się zalogować.")
+        setError("Nie udało się zalogować.");
       }
     }
   }
