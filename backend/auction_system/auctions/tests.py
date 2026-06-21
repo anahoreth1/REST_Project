@@ -211,9 +211,10 @@ class BiddingTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        self.assertTrue(
-            Bid.objects.filter(auction=self.auction, amount="150.00").exists()
-        )
+        bid = Bid.objects.get(auction=self.auction, amount="150.00")
+        self.assertEqual(bid.user, self.user)
+        self.assertEqual(response.data.get("user"), self.user.id)
+        self.assertEqual(response.data.get("user_name"), self.user.name)
 
     def test_wrong_amount_format(self):
         self.client.credentials(

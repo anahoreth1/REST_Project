@@ -97,7 +97,7 @@ class BidListCreateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        bid = serializer.save(auction=auction)
+        bid = serializer.save(auction=auction, user=request.user)
 
         auction.current_price = amount
         auction.save(update_fields=["current_price"])
