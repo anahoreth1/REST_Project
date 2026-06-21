@@ -57,6 +57,9 @@ LOGGING = {
             "filename": os.path.join(LOG_DIR, "app.log"),
             "formatter": "verbose",
         },
+         "console": {
+            "class": "logging.StreamHandler",
+        }
     },
 
     "loggers": {

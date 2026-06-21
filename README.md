@@ -40,6 +40,11 @@ Celem projektu jest implementacja rozproszonego systemu aukcyjnego opartego o ar
 - Walidacja danych (np. dla aukcji pole `start_date` musi być wcześniejsze niż `end_date`)
 - Testy jednostkowe
 
+Dodatowe:
+- Hasło nit jest widoczne (hash)
+- Zaimplementowana autoryzacja JWT
+- Model Bid chroni użytkownika
+- Logowanie operacji (plik `logs` oraz console)
 
 ## 3. Uruchomienie lokalne
 
