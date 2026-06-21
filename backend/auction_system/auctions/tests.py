@@ -1,16 +1,27 @@
 from datetime import timedelta
 
+from django.contrib.auth.hashers import make_password
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
-
+from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Auction, Bid
 
+from users.models import User
 
 # Testy API dla obsługi aukcji
 class AuctionApiTest(APITestCase):
     # Przygotowanie przykładowej aukcji
     def setUp(self):
+        self.user = User.objects.create(
+            email="test@example.com",
+            name="Test User",
+            password=make_password("password123"),
+        )
+
+        refresh = RefreshToken.for_user(self.user)
+        self.token = str(refresh.access_token)
+
         self.auction = Auction.objects.create(
             name="testname",
             description="testdescription",
@@ -22,9 +33,26 @@ class AuctionApiTest(APITestCase):
             owner_id=1,
             status="active",
         )
+        
+    def test_get_auction_list_without_token(self):
+        self.client.credentials()
+
+        response = self.client.get("/api/auctions/")
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_single_auction_without_token(self):
+        self.client.credentials()
+        response = self.client.get(f"/api/auctions/{self.auction.id}/")
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     # Test tworzenia nowej aukcji
     def test_create_auction(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {self.token}"
+        )
+
         data = {
             "name": "newauction",
             "description": "newdescription",
@@ -44,6 +72,10 @@ class AuctionApiTest(APITestCase):
 
     # Test pobierania listy aukcji
     def test_get_auction_list(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {self.token}"
+        )
+
         response = self.client.get("/api/auctions/")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -51,12 +83,19 @@ class AuctionApiTest(APITestCase):
 
     # Test pobierania jednej aukcji
     def test_get_single_auction(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {self.token}"
+        )
         response = self.client.get(f"/api/auctions/{self.auction.id}/")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     # Test pobierania aukcji po id
     def test_get_auction_by_id(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {self.token}"
+        )
+
         response = self.client.get(f"/api/auctions/{self.auction.id}/")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -65,6 +104,10 @@ class AuctionApiTest(APITestCase):
 
     # Test edycji aukcji
     def test_update_auction(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {self.token}"
+        )
+
         data = {
             "name": "newauction",
             "description": "newdescription",
@@ -90,6 +133,9 @@ class AuctionApiTest(APITestCase):
 
     # Test usuwania aukcji
     def test_delete_auction(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {self.token}"
+        )
         response = self.client.delete(f"/api/auctions/{self.auction.id}/")
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
@@ -100,6 +146,9 @@ class AuctionApiTest(APITestCase):
 
     # Test filtrowania aukcji po statusie
     def test_filter_auctions_by_status(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {self.token}"
+        )
         Auction.objects.create(
             name="Telefon",
             description="Opis",
@@ -120,6 +169,15 @@ class AuctionApiTest(APITestCase):
 
 class BiddingTests(APITestCase):
     def setUp(self):
+        self.user = User.objects.create(
+            email="test@example.com",
+            name="Test User",
+            password=make_password("password123"),
+        )
+
+        refresh = RefreshToken.for_user(self.user)
+        self.token = str(refresh.access_token)
+
         self.auction = Auction.objects.create(
             name="testname",
             description="testdescription",
@@ -132,7 +190,19 @@ class BiddingTests(APITestCase):
             status="active",
         )
 
+    def test_create_bid_without_token(self):
+        self.client.credentials()
+        data = {"amount": "150.00"}
+
+        response = self.client.post(
+            f"/api/auctions/{self.auction.id}/bids/", data, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
     def test_create_bid(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {self.token}"
+        )
         data = {"amount": "150.00"}
 
         response = self.client.post(
@@ -146,6 +216,10 @@ class BiddingTests(APITestCase):
         )
 
     def test_wrong_amount_format(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {self.token}"
+        )
+
         data = {"amount": "abcd"}
 
         response = self.client.post(
@@ -155,6 +229,10 @@ class BiddingTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_bid_must_be_higher_than_current_price(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {self.token}"
+        )
+
         data = {"amount": "90.00"}
 
         response = self.client.post(
@@ -164,6 +242,10 @@ class BiddingTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_bid_updates_current_price(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {self.token}"
+        )
+
         data = {"amount": "180.00"}
 
         response = self.client.post(
@@ -177,6 +259,10 @@ class BiddingTests(APITestCase):
         self.assertEqual(str(self.auction.current_price), "180.00")
 
     def test_cannot_bid_on_ended_auction(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {self.token}"
+        )
+
         self.auction.end_date = timezone.now() - timedelta(hours=3)
         self.auction.save()
 
