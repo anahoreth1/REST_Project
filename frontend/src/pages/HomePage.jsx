@@ -10,6 +10,7 @@ function HomePage() {
   const [error, setError] = useState(null)
   const [categoryFilter, setCategoryFilter] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
+  const [sortOption, setSortOption] = useState("start_date")
   const [bidAmounts, setBidAmounts] = useState({})
   const [editingId, setEditingId] = useState(null)
   const [editData, setEditData] = useState({})
@@ -47,7 +48,7 @@ function HomePage() {
 
   useEffect(() => {
     fetchAuctions()
-  }, [categoryFilter, statusFilter])
+  }, [categoryFilter, statusFilter, sortOption])
 
   useEffect(() => {
     if (!createMessage && !formMessage) return
@@ -85,6 +86,7 @@ function HomePage() {
       const params = {}
       if (categoryFilter) params.category = categoryFilter
       if (statusFilter) params.status = statusFilter
+      if (sortOption) params.ordering = sortOption
 
       const response = await api.get("/auctions/", { params })
       setAuctions(response.data)
@@ -292,6 +294,22 @@ function HomePage() {
                   <option value="active">Active</option>
                   <option value="scheduled">Scheduled</option>
                   <option value="ended">Ended</option>
+                </select>
+              </label>
+            </div>
+
+            <div>
+              <label>
+                Sortuj:
+                <select value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
+                  <option value="start_date">Start: rosnąco</option>
+                  <option value="-start_date">Start: malejąco</option>
+                  <option value="end_date">Koniec: rosnąco</option>
+                  <option value="-end_date">Koniec: malejąco</option>
+                  <option value="current_price">Cena Aktualna: rosnąco</option>
+                  <option value="-current_price">Cena Aktualna: malejąco</option>
+                  <option value="name">Nazwa: A→Z</option>
+                  <option value="-name">Nazwa: Z→A</option>
                 </select>
               </label>
             </div>
