@@ -3,12 +3,15 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+import logging
 
 from .models import Auction, Bid
 from .serializers import AuctionSerializer, BidSerializer
 
+logger = logging.getLogger(__name__)
 
 def update_auctions():
+    logger.debug("update_auctions called")
     for auction in Auction.objects.all():
         auction.update_status()
 
@@ -63,6 +66,7 @@ class AuctionDetailView(generics.RetrieveUpdateDestroyAPIView):
 class BidListCreateView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, auction_id):
+        logger.info("Listing bids for auction %s", auction_id)
         auction = get_object_or_404(Auction, id=auction_id)
 
         bids = Bid.objects.filter(auction=auction).order_by("-created_at")
@@ -72,6 +76,7 @@ class BidListCreateView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, auction_id):
+        logger.info("Creating bid for auction %s by user %s", auction_id, request.user.id)
         auction = get_object_or_404(Auction, id=auction_id)
 
         auction.update_status()
@@ -79,12 +84,14 @@ class BidListCreateView(APIView):
         serializer = BidSerializer(data=request.data)
 
         if not serializer.is_valid():
+            logger.warning("Bid validation failed for auction %s: %s", auction_id, serializer.errors)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         amount = serializer.validated_data["amount"]
 
         # aukcja nie jest aktywna
         if auction.status != "active":
+            logger.warning("Bid rejected because auction %s is not active", auction_id)
             return Response(
                 {"detail": "Aukcja nie jest aktywna."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -92,6 +99,7 @@ class BidListCreateView(APIView):
 
         # oferta za niska
         if amount <= auction.current_price:
+            logger.warning("Bid rejected for auction %s: amount %s <= current_price %s", auction_id, amount, auction.current_price)
             return Response(
                 {"detail": "Oferta musi być wyższa niż aktualna cena."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -102,4 +110,5 @@ class BidListCreateView(APIView):
         auction.current_price = amount
         auction.save(update_fields=["current_price"])
 
+        logger.info("Bid created for auction %s by user %s: %s", auction_id, request.user.id, amount)
         return Response(BidSerializer(bid).data, status=status.HTTP_201_CREATED)

@@ -1,5 +1,6 @@
 from django.contrib.auth.hashers import check_password
 from django.shortcuts import get_object_or_404
+import logging
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -9,16 +10,19 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
 from .serializers import UserSerializer
 
+logger = logging.getLogger(__name__)
 
 class UserCreateView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        logger.info("Register attempt for email: %s", request.data.get("email"))
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             refresh = RefreshToken.for_user(user)
 
+            logger.info(f"New user created: {user.email}")
             return Response({
                 "user": UserSerializer(user).data,
                 "access": str(refresh.access_token),
@@ -28,6 +32,7 @@ class UserCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
+        logger.info("User list requested")
         users = User.objects.all()
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -36,11 +41,13 @@ class UserCreateView(APIView):
 class UserCreateViewById(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, user_id):
+        logger.info("Getting user %s", user_id)
         user = get_object_or_404(User, id=user_id)
         serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, user_id):
+        logger.info("Updating user %s", user_id)
         user = get_object_or_404(User, id=user_id)
         serializer = UserSerializer(user, data=request.data, partial=True)
 
@@ -51,6 +58,7 @@ class UserCreateViewById(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, user_id):
+        logger.info("Deleting user %s", user_id)
         user = get_object_or_404(User, id=user_id)
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -58,6 +66,7 @@ class UserCreateViewById(APIView):
 
 class LoginView(APIView):
     def post(self, request):
+        logger.info("Login attempt for email: %s", request.data.get("email"))
         email = request.data.get("email")
         password = request.data.get("password")
 
