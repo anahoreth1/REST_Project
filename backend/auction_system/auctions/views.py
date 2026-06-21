@@ -10,6 +10,7 @@ from .serializers import AuctionSerializer, BidSerializer
 
 logger = logging.getLogger(__name__)
 
+
 def update_auctions():
     logger.debug("update_auctions called")
     for auction in Auction.objects.all():
@@ -27,12 +28,27 @@ class AuctionListCreateView(generics.ListCreateAPIView):
 
         category = self.request.query_params.get("category")
         status_param = self.request.query_params.get("status")
+        ordering = self.request.query_params.get("ordering")
 
         if category:
             queryset = queryset.filter(category=category)
 
         if status_param:
             queryset = queryset.filter(status=status_param)
+
+        allowed_ordering_fields = [
+            "name",
+            "current_price",
+            "start_date",
+            "end_date",
+            "status",
+            "category",
+        ]
+
+        if ordering:
+            ordering_field = ordering.lstrip("-")
+            if ordering_field in allowed_ordering_fields:
+                queryset = queryset.order_by(ordering)
 
         return queryset
 
@@ -46,15 +62,12 @@ class AuctionDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         queryset = Auction.objects.all()
 
-        # Pobranie parametrów filtrowania z adresu URL
         category = self.request.query_params.get("category")
         status_param = self.request.query_params.get("status")
 
-        # Filtrowanie po kategorii
         if category:
             queryset = queryset.filter(category=category)
 
-        # Filtrowanie po statusie
         if status_param:
             queryset = queryset.filter(status=status_param)
 
@@ -65,6 +78,7 @@ class AuctionDetailView(generics.RetrieveUpdateDestroyAPIView):
 # (obsługa `GET /auctions/{id}/bids` i `POST /auctions/{id}/bids`)
 class BidListCreateView(APIView):
     permission_classes = [IsAuthenticated]
+
     def get(self, request, auction_id):
         logger.info("Listing bids for auction %s", auction_id)
         auction = get_object_or_404(Auction, id=auction_id)
@@ -99,7 +113,12 @@ class BidListCreateView(APIView):
 
         # oferta za niska
         if amount <= auction.current_price:
-            logger.warning("Bid rejected for auction %s: amount %s <= current_price %s", auction_id, amount, auction.current_price)
+            logger.warning(
+                "Bid rejected for auction %s: amount %s <= current_price %s",
+                auction_id,
+                amount,
+                auction.current_price,
+            )
             return Response(
                 {"detail": "Oferta musi być wyższa niż aktualna cena."},
                 status=status.HTTP_400_BAD_REQUEST,
