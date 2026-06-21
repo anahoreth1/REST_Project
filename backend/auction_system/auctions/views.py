@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
+from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -20,6 +21,9 @@ def update_auctions():
 class AuctionListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = AuctionSerializer
+    filter_backends = [OrderingFilter]
+    ordering_fields = ["start_date", "end_date", "current_price", "name"]
+    ordering = ["start_date"]
 
     def get_queryset(self):
         update_auctions()

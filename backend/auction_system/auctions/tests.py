@@ -81,6 +81,191 @@ class AuctionApiTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
+    def test_get_auction_list_sorted_by_start_date(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {self.token}"
+        )
+
+        Auction.objects.create(
+            name="earlyauction",
+            description="early description",
+            category="testcategory",
+            starting_price="50.00",
+            current_price="50.00",
+            start_date=timezone.now() - timedelta(days=10),
+            end_date=timezone.now() - timedelta(days=5),
+            owner_id=2,
+            status="ended",
+        )
+
+        Auction.objects.create(
+            name="laterauction",
+            description="later description",
+            category="testcategory",
+            starting_price="150.00",
+            current_price="150.00",
+            start_date=timezone.now() + timedelta(days=5),
+            end_date=timezone.now() + timedelta(days=10),
+            owner_id=3,
+            status="planned",
+        )
+
+        response = self.client.get("/api/auctions/?ordering=start_date")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            [auction["name"] for auction in response.data],
+            ["earlyauction", "testname", "laterauction"],
+        )
+
+    def test_get_auction_list_sorted_by_end_date_desc(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {self.token}"
+        )
+
+        Auction.objects.create(
+            name="soonerauction",
+            description="soon end",
+            category="testcategory",
+            starting_price="80.00",
+            current_price="80.00",
+            start_date=timezone.now() - timedelta(days=5),
+            end_date=timezone.now() + timedelta(hours=12),
+            owner_id=2,
+            status="active",
+        )
+
+        Auction.objects.create(
+            name="laterauction",
+            description="later end",
+            category="testcategory",
+            starting_price="120.00",
+            current_price="120.00",
+            start_date=timezone.now() - timedelta(days=2),
+            end_date=timezone.now() + timedelta(days=10),
+            owner_id=3,
+            status="active",
+        )
+
+        response = self.client.get("/api/auctions/?ordering=-end_date")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            [auction["name"] for auction in response.data],
+            ["laterauction", "testname", "soonerauction"],
+        )
+
+    def test_get_auction_list_sorted_by_start_date_desc(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {self.token}"
+        )
+
+        Auction.objects.create(
+            name="oldauction",
+            description="old start",
+            category="testcategory",
+            starting_price="70.00",
+            current_price="70.00",
+            start_date=timezone.now() - timedelta(days=10),
+            end_date=timezone.now() - timedelta(days=5),
+            owner_id=2,
+            status="ended",
+        )
+
+        Auction.objects.create(
+            name="newauction",
+            description="new start",
+            category="testcategory",
+            starting_price="180.00",
+            current_price="180.00",
+            start_date=timezone.now() + timedelta(days=5),
+            end_date=timezone.now() + timedelta(days=6),
+            owner_id=3,
+            status="planned",
+        )
+
+        response = self.client.get("/api/auctions/?ordering=-start_date")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            [auction["name"] for auction in response.data],
+            ["newauction", "testname", "oldauction"],
+        )
+
+    def test_get_auction_list_sorted_by_current_price_asc(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {self.token}"
+        )
+
+        Auction.objects.create(
+            name="cheapauction",
+            description="cheap",
+            category="testcategory",
+            starting_price="10.00",
+            current_price="10.00",
+            start_date=timezone.now() - timedelta(days=1),
+            end_date=timezone.now() + timedelta(days=1),
+            owner_id=2,
+            status="active",
+        )
+
+        Auction.objects.create(
+            name="expensiveauction",
+            description="expensive",
+            category="testcategory",
+            starting_price="300.00",
+            current_price="300.00",
+            start_date=timezone.now() - timedelta(days=1),
+            end_date=timezone.now() + timedelta(days=1),
+            owner_id=3,
+            status="active",
+        )
+
+        response = self.client.get("/api/auctions/?ordering=current_price")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            [auction["name"] for auction in response.data],
+            ["cheapauction", "testname", "expensiveauction"],
+        )
+
+    def test_get_auction_list_sorted_by_name_desc(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {self.token}"
+        )
+
+        Auction.objects.create(
+            name="alphaauction",
+            description="alpha",
+            category="testcategory",
+            starting_price="20.00",
+            current_price="20.00",
+            start_date=timezone.now() - timedelta(days=1),
+            end_date=timezone.now() + timedelta(days=1),
+            owner_id=2,
+            status="active",
+        )
+
+        Auction.objects.create(
+            name="zuluauction",
+            description="zulu",
+            category="testcategory",
+            starting_price="40.00",
+            current_price="40.00",
+            start_date=timezone.now() - timedelta(days=1),
+            end_date=timezone.now() + timedelta(days=1),
+            owner_id=3,
+            status="active",
+        )
+
+        response = self.client.get("/api/auctions/?ordering=-name")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            [auction["name"] for auction in response.data],
+            ["zuluauction", "testname", "alphaauction"],
+        )
+
     # Test pobierania jednej aukcji
     def test_get_single_auction(self):
         self.client.credentials(
