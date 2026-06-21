@@ -151,7 +151,8 @@ class UserViewDetailTest(APITestCase):
 
         self.assertEqual(self.user.name, "updatedname")
         self.assertEqual(self.user.email, "updated@example.com")
-        self.assertEqual(self.user.password, "updatedpassword")
+        self.assertNotEqual(self.user.password, "updatedpassword")
+        self.assertTrue(self.user.password.startswith("pbkdf2_sha256$"))
 
     def test_update_user_that_dont_exist(self):
         data = {
