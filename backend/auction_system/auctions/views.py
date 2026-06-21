@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -13,6 +14,7 @@ def update_auctions():
 
 
 class AuctionListCreateView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = AuctionSerializer
 
     def get_queryset(self):
@@ -33,6 +35,7 @@ class AuctionListCreateView(generics.ListCreateAPIView):
 
 
 class AuctionDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = AuctionSerializer
 
     def get_queryset(self):
@@ -58,6 +61,7 @@ class AuctionDetailView(generics.RetrieveUpdateDestroyAPIView):
 # Widok do obsługi listowania i składania ofert
 # (obsługa `GET /auctions/{id}/bids` i `POST /auctions/{id}/bids`)
 class BidListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request, auction_id):
         auction = get_object_or_404(Auction, id=auction_id)
 

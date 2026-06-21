@@ -1,7 +1,7 @@
 from django.contrib.auth.hashers import check_password, make_password
-from django.utils import timezone
 
 from rest_framework import status
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.test import APITestCase
 
 from .models import User
@@ -78,14 +78,36 @@ class UserCreateViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(User.objects.filter(email="test@example.com").count(), 1)
 
+    def test_get_users(self):
+        response = self.client.get("/api/users/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
 
 class UserViewDetailTest(APITestCase):
     def setUp(self):
         self.user = User.objects.create(
-            name="testuser", email="test@example.com", password="testpassword"
+            name="testuser", email="test@example.com", password=make_password("testpassword")
+        )
+        refresh = RefreshToken.for_user(self.user)
+
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
         )
 
+    def test_find_user_without_token(self):
+        self.client.credentials()
+
+        response = self.client.get(f"/api/users/{self.user.id}/")
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
     def test_find_user(self):
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
+        )
+
         response = self.client.get(f"/api/users/{self.user.id}/")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -93,11 +115,19 @@ class UserViewDetailTest(APITestCase):
         self.assertEqual(response.data["email"], "test@example.com")
 
     def test_find_user_wrong_id_format(self):
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
+        )
         response = self.client.get("/api/users/abc/")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_find_user_that_dont_exist(self):
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
+        )
         response = self.client.get("/api/users/99999/")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -109,6 +139,10 @@ class UserViewDetailTest(APITestCase):
             "password": "updatedpassword",
         }
 
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
+        )
         response = self.client.put(f"/api/users/{self.user.id}/", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -117,7 +151,8 @@ class UserViewDetailTest(APITestCase):
 
         self.assertEqual(self.user.name, "updatedname")
         self.assertEqual(self.user.email, "updated@example.com")
-        self.assertEqual(self.user.password, "updatedpassword")
+        self.assertNotEqual(self.user.password, "updatedpassword")
+        self.assertTrue(self.user.password.startswith("pbkdf2_sha256$"))
 
     def test_update_user_that_dont_exist(self):
         data = {
@@ -126,6 +161,10 @@ class UserViewDetailTest(APITestCase):
             "password": "updatedpassword",
         }
 
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
+        )
         response = self.client.put("/api/users/99999/", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -137,6 +176,10 @@ class UserViewDetailTest(APITestCase):
             "password": "updatedpassword",
         }
 
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
+        )
         response = self.client.put(f"/api/users/{self.user.id}/", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -148,6 +191,10 @@ class UserViewDetailTest(APITestCase):
             "password": "updatedpassword",
         }
 
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
+        )
         response = self.client.put(f"/api/users/{self.user.id}/", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -159,6 +206,10 @@ class UserViewDetailTest(APITestCase):
             "password": "",
         }
 
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
+        )
         response = self.client.put(f"/api/users/{self.user.id}/", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -170,11 +221,19 @@ class UserViewDetailTest(APITestCase):
             "password": "updatedpassword",
         }
 
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
+        )
         response = self.client.put(f"/api/users/{self.user.id}/", data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_delete_user(self):
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
+        )
         response = self.client.delete(f"/api/users/{self.user.id}/")
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
@@ -182,6 +241,10 @@ class UserViewDetailTest(APITestCase):
         self.assertFalse(User.objects.filter(id=self.user.id).exists())
 
     def test_delete_user_that_dont_exist(self):
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}"
+        )
         response = self.client.delete("/api/users/99999/")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -205,8 +268,28 @@ class LoginViewTests(APITestCase):
             format="json",
         )
 
+        self.assertEqual(
+            response.data["user"]["email"],
+            self.user.email,
+        )
+
+        self.assertIn("access", response.data)
+        self.assertIn("refresh", response.data)
+
+    def test_login_returns_jwt_tokens(self):
+        response = self.client.post(
+            "/api/users/login/",
+            {
+                "email": "test@example.com",
+                "password": "Password123",
+            },
+            format="json",
+        )
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["email"], self.user.email)
+
+        self.assertTrue(response.data["access"])
+        self.assertTrue(response.data["refresh"])
 
     def test_login_with_wrong_password(self):
         response = self.client.post(
