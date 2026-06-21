@@ -1,8 +1,10 @@
 from django.contrib.auth.hashers import check_password
 from django.shortcuts import get_object_or_404
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
 from .serializers import UserSerializer
@@ -23,6 +25,7 @@ class UserCreateView(APIView):
 
 
 class UserCreateViewById(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request, user_id):
         user = get_object_or_404(User, id=user_id)
         serializer = UserSerializer(user)
@@ -64,4 +67,10 @@ class LoginView(APIView):
             )
 
         serializer = UserSerializer(user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            "user": serializer.data,
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+        })
