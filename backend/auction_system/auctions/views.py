@@ -32,12 +32,17 @@ class AuctionListCreateView(generics.ListCreateAPIView):
 
         category = self.request.query_params.get("category")
         status_param = self.request.query_params.get("status")
+        owner_id = self.request.query_params.get("owner_id")
 
         if category:
             queryset = queryset.filter(category=category)
 
         if status_param:
             queryset = queryset.filter(status=status_param)
+
+        if owner_id and owner_id.isdigit():
+            queryset = queryset.filter(owner_id=int(owner_id))
+
         return queryset
 
 

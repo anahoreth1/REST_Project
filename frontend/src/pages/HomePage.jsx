@@ -50,7 +50,7 @@ function HomePage() {
 
   useEffect(() => {
     fetchAuctions()
-  }, [categoryFilter, statusFilter, sortOption, page])
+  }, [categoryFilter, statusFilter, sortOption, page, activeTab, currentUser])
 
   useEffect(() => {
     if (!createMessage && !formMessage) return
@@ -90,6 +90,7 @@ function HomePage() {
       if (statusFilter) params.status = statusFilter
       if (sortOption) params.ordering = sortOption
       if (page) params.page = page
+      if (activeTab === "my" && currentUser) params.owner_id = currentUser.id
 
       const response = await api.get("/auctions/", { params })
       const data = response.data.results || response.data
@@ -250,6 +251,7 @@ function HomePage() {
             setActiveTab("all")
             setCategoryFilter("")
             setStatusFilter("")
+            setPage(1)
           }}
         >
           Wszystkie aukcji
@@ -259,7 +261,10 @@ function HomePage() {
             ...styles.tabButton,
             ...(activeTab === "my" ? styles.tabButtonActive : styles.tabButtonInactive)
           }}
-          onClick={() => setActiveTab("my")}
+          onClick={() => {
+            setActiveTab("my")
+            setPage(1)
+          }}
         >
           Moje aukcji
         </button>
@@ -595,6 +600,28 @@ function HomePage() {
                     </article>
                   ))
                 )}
+              </section>
+
+              <section style={styles.pagination}>
+                <button
+                  type="button"
+                  disabled={!paginationData.previous}
+                  style={styles.pageButton}
+                  onClick={() => setPage((prevPage) => Math.max(1, prevPage - 1))}
+                >
+                  Poprzednia
+                </button>
+                <span style={styles.pageInfo}>
+                  Strona {page} z {Math.max(1, Math.ceil(paginationData.count / 5))}
+                </span>
+                <button
+                  type="button"
+                  disabled={!paginationData.next}
+                  style={styles.pageButton}
+                  onClick={() => setPage((prevPage) => prevPage + 1)}
+                >
+                  Następna
+                </button>
               </section>
             </>
           )}
