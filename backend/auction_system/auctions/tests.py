@@ -34,6 +34,9 @@ class AuctionApiTest(APITestCase):
             status="active",
         )
         
+    def get_page_results(self, response):
+        return response.data["results"] if isinstance(response.data, dict) else response.data
+
     def test_get_auction_list_without_token(self):
         self.client.credentials()
 
@@ -79,7 +82,42 @@ class AuctionApiTest(APITestCase):
         response = self.client.get("/api/auctions/")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(self.get_page_results(response)), 1)
+        self.assertEqual(response.data["count"], 1)
+        self.assertIsNone(response.data["previous"])
+        self.assertIsNone(response.data["next"])
+
+    def test_get_auction_list_paginated(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {self.token}"
+        )
+
+        for index in range(5):
+            Auction.objects.create(
+                name=f"auction_{index}",
+                description="pagination",
+                category="testcategory",
+                starting_price="10.00",
+                current_price="10.00",
+                start_date=timezone.now() + timedelta(days=index),
+                end_date=timezone.now() + timedelta(days=index + 1),
+                owner_id=index + 2,
+                status="planned",
+            )
+
+        response = self.client.get("/api/auctions/?page=1")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 6)
+        self.assertEqual(len(self.get_page_results(response)), 5)
+        self.assertIsNone(response.data["previous"])
+        self.assertIsNotNone(response.data["next"])
+
+        second_page = self.client.get("/api/auctions/?page=2")
+        self.assertEqual(second_page.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(self.get_page_results(second_page)), 1)
+        self.assertIsNotNone(second_page.data["previous"])
+        self.assertIsNone(second_page.data["next"])
 
     def test_get_auction_list_sorted_by_start_date(self):
         self.client.credentials(
@@ -111,10 +149,11 @@ class AuctionApiTest(APITestCase):
         )
 
         response = self.client.get("/api/auctions/?ordering=start_date")
+        results = self.get_page_results(response)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
-            [auction["name"] for auction in response.data],
+            [auction["name"] for auction in results],
             ["earlyauction", "testname", "laterauction"],
         )
 
@@ -148,10 +187,11 @@ class AuctionApiTest(APITestCase):
         )
 
         response = self.client.get("/api/auctions/?ordering=-end_date")
+        results = self.get_page_results(response)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
-            [auction["name"] for auction in response.data],
+            [auction["name"] for auction in results],
             ["laterauction", "testname", "soonerauction"],
         )
 
@@ -185,10 +225,11 @@ class AuctionApiTest(APITestCase):
         )
 
         response = self.client.get("/api/auctions/?ordering=-start_date")
+        results = self.get_page_results(response)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
-            [auction["name"] for auction in response.data],
+            [auction["name"] for auction in results],
             ["newauction", "testname", "oldauction"],
         )
 
@@ -222,10 +263,11 @@ class AuctionApiTest(APITestCase):
         )
 
         response = self.client.get("/api/auctions/?ordering=current_price")
+        results = self.get_page_results(response)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
-            [auction["name"] for auction in response.data],
+            [auction["name"] for auction in results],
             ["cheapauction", "testname", "expensiveauction"],
         )
 
@@ -259,10 +301,11 @@ class AuctionApiTest(APITestCase):
         )
 
         response = self.client.get("/api/auctions/?ordering=-name")
+        results = self.get_page_results(response)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
-            [auction["name"] for auction in response.data],
+            [auction["name"] for auction in results],
             ["zuluauction", "testname", "alphaauction"],
         )
 
@@ -349,7 +392,7 @@ class AuctionApiTest(APITestCase):
         response = self.client.get("/api/auctions/?status=active")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(self.get_page_results(response)), 2)
 
 
 class BiddingTests(APITestCase):
