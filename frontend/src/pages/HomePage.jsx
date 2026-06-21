@@ -114,8 +114,7 @@ function HomePage() {
 
     try {
       await api.post(`/auctions/${auctionId}/bids/`, {
-        amount,
-        user_email: currentUser.email
+        amount
       })
       setFormMessage("Oferta została przyjęta.")
       fetchAuctions()
@@ -363,7 +362,7 @@ function HomePage() {
                           <li key={bid.id} style={styles.bidHistoryItem}>
                             <div style={styles.bidHistoryMeta}>
                               <span>{new Date(bid.created_at).toLocaleString()}</span>
-                              <span style={styles.bidHistoryEmail}>{bid.user_email}</span>
+                              <span style={styles.bidHistoryName}>User: {bid.user_name}</span>
                             </div>
                             <strong style={styles.bidHistoryAmount}>{bid.amount}</strong>
                           </li>
@@ -514,7 +513,7 @@ function HomePage() {
                                   <li key={bid.id} style={styles.bidHistoryItem}>
                                     <div style={styles.bidHistoryMeta}>
                                       <span>{new Date(bid.created_at).toLocaleString()}</span>
-                                      <span style={styles.bidHistoryEmail}>{bid.user_email}</span>
+                                      <span style={styles.bidHistoryName}>User: {bid.user_name}</span>
                                     </div>
                                     <strong style={styles.bidHistoryAmount}>{bid.amount}</strong>
                                   </li>
@@ -754,7 +753,7 @@ const styles = {
     gap: "4px",
     minWidth: 0,
   },
-  bidHistoryEmail: {
+  bidHistoryName: {
     fontSize: "0.95rem",
     color: "var(--text-secondary)",
     overflowWrap: "anywhere"

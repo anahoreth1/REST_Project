@@ -30,7 +30,12 @@ class AuctionSerializer(serializers.ModelSerializer):
 
 
 class BidSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Bid
-        fields = "__all__"
-        read_only_fields = ["auction"]
+        fields = ["id", "auction", "user", "user_name", "amount", "created_at"]
+        read_only_fields = ["auction", "user", "user_name"]
+
+    def get_user_name(self, obj):
+        return getattr(obj.user, "name", None)
