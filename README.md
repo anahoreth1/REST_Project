@@ -45,6 +45,8 @@ Dodatowe:
 - Zaimplementowana autoryzacja JWT
 - Model Bid chroni użytkownika
 - Logowanie operacji (plik `logs` oraz console)
+- Paginacja i filtrowanie wyników
+- Sortowanie wyników
 
 ## 3. Uruchomienie lokalne
 

@@ -11,6 +11,8 @@ function HomePage() {
   const [categoryFilter, setCategoryFilter] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
   const [sortOption, setSortOption] = useState("start_date")
+  const [page, setPage] = useState(1)
+  const [paginationData, setPaginationData] = useState({ count: 0, next: null, previous: null })
   const [bidAmounts, setBidAmounts] = useState({})
   const [editingId, setEditingId] = useState(null)
   const [editData, setEditData] = useState({})
@@ -48,7 +50,7 @@ function HomePage() {
 
   useEffect(() => {
     fetchAuctions()
-  }, [categoryFilter, statusFilter, sortOption])
+  }, [categoryFilter, statusFilter, sortOption, page])
 
   useEffect(() => {
     if (!createMessage && !formMessage) return
@@ -87,10 +89,17 @@ function HomePage() {
       if (categoryFilter) params.category = categoryFilter
       if (statusFilter) params.status = statusFilter
       if (sortOption) params.ordering = sortOption
+      if (page) params.page = page
 
       const response = await api.get("/auctions/", { params })
-      setAuctions(response.data)
-      await fetchAuctionBids(response.data)
+      const data = response.data.results || response.data
+      setAuctions(data)
+      setPaginationData({
+        count: response.data.count || data.length,
+        next: response.data.next || null,
+        previous: response.data.previous || null,
+      })
+      await fetchAuctionBids(data)
     } catch (err) {
       setError("Nie udało się pobrać aukcji.")
     } finally {
@@ -275,7 +284,13 @@ function HomePage() {
             <div>
               <label>
                 Kategoria:
-                <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => {
+                    setCategoryFilter(e.target.value)
+                    setPage(1)
+                  }}
+                >
                   <option value="">Wszystkie</option>
                   {categories.map((category) => (
                     <option key={category} value={category}>
@@ -289,7 +304,13 @@ function HomePage() {
             <div>
               <label>
                 Status:
-                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value)
+                    setPage(1)
+                  }}
+                >
                   <option value="">Wszystkie</option>
                   <option value="active">Active</option>
                   <option value="scheduled">Scheduled</option>
@@ -301,7 +322,13 @@ function HomePage() {
             <div>
               <label>
                 Sortuj:
-                <select value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
+                <select
+                  value={sortOption}
+                  onChange={(e) => {
+                    setSortOption(e.target.value)
+                    setPage(1)
+                  }}
+                >
                   <option value="start_date">Start: rosnąco</option>
                   <option value="-start_date">Start: malejąco</option>
                   <option value="end_date">Koniec: rosnąco</option>
@@ -313,6 +340,28 @@ function HomePage() {
                 </select>
               </label>
             </div>
+          </section>
+
+          <section style={styles.pagination}>
+            <button
+              type="button"
+              disabled={!paginationData.previous}
+              style={styles.pageButton}
+              onClick={() => setPage((prevPage) => Math.max(1, prevPage - 1))}
+            >
+              Poprzednia
+            </button>
+            <span style={styles.pageInfo}>
+              Strona {page} z {Math.max(1, Math.ceil(paginationData.count / 5))}
+            </span>
+            <button
+              type="button"
+              disabled={!paginationData.next}
+              style={styles.pageButton}
+              onClick={() => setPage((prevPage) => prevPage + 1)}
+            >
+              Następna
+            </button>
           </section>
 
           <section style={styles.auctionGrid}>
@@ -868,6 +917,26 @@ const styles = {
     color: "var(--text)",
     cursor: "pointer",
     transition: "opacity 0.3s ease"
+  },
+  pagination: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "12px",
+    marginBottom: "24px",
+    flexWrap: "wrap"
+  },
+  pageButton: {
+    padding: "10px 16px",
+    border: "1px solid var(--border)",
+    borderRadius: "8px",
+    background: "var(--bg)",
+    color: "var(--text)",
+    cursor: "pointer"
+  },
+  pageInfo: {
+    fontWeight: "600",
+    color: "var(--text-secondary)"
   },
   createSection: {
     padding: "20px",
