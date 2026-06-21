@@ -32,28 +32,12 @@ class AuctionListCreateView(generics.ListCreateAPIView):
 
         category = self.request.query_params.get("category")
         status_param = self.request.query_params.get("status")
-        ordering = self.request.query_params.get("ordering")
 
         if category:
             queryset = queryset.filter(category=category)
 
         if status_param:
             queryset = queryset.filter(status=status_param)
-
-        allowed_ordering_fields = [
-            "name",
-            "current_price",
-            "start_date",
-            "end_date",
-            "status",
-            "category",
-        ]
-
-        if ordering:
-            ordering_field = ordering.lstrip("-")
-            if ordering_field in allowed_ordering_fields:
-                queryset = queryset.order_by(ordering)
-
         return queryset
 
 
