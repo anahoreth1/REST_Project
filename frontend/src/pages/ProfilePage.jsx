@@ -22,44 +22,76 @@ function ProfilePage() {
     }, [currentUser, navigate])
 
     const handleSubmit = async (event) => {
-        event.preventDefault()
-        setError(null)
-        setMessage(null)
+        event.preventDefault();
+        setError(null);
+        setMessage(null);
 
         if (!name || !email) {
-            setError("Wypełnij imię i email.")
-            return
+            setError("Wypełnij imię i email.");
+            return;
         }
 
-        const payload = { name, email }
+        const payload = {
+            name,
+            email,
+        };
+
         if (password.trim()) {
-            payload.password = password
+            payload.password = password;
         }
 
         try {
-            const response = await api.put(`/users/${currentUser.id}/`, payload)
-            setCurrentUser(response.data)
-            setPassword("")
-            setMessage("Dane konta zostały zaktualizowane.")
+            const response = await api.put(
+                `/users/${currentUser.id}/`,
+                payload
+            );
+
+            setCurrentUser(response.data);
+            localStorage.setItem("user", JSON.stringify(response.data));
+
+            setPassword("");
+            setMessage("Dane konta zostały zaktualizowane.");
+
         } catch (err) {
-            setError(
-                err.response?.data?.message || "Nie udało się zaktualizować profilu."
-            )
+            const status = err.response?.status;
+
+            if (status === 401) {
+                setError("Brak autoryzacji.");
+            } else if (status === 400) {
+                setError("Nieprawidłowe dane.");
+            } else {
+                setError(
+                    err.response?.data?.message ||
+                    "Nie udało się zaktualizować profilu."
+                );
+            }
         }
     }
 
     const handleDelete = async () => {
         const confirmed = window.confirm(
             "Na pewno usunąć konto? Ta operacja jest nieodwracalna."
-        )
-        if (!confirmed) return
+        );
+        if (!confirmed) return;
 
         try {
-            await api.delete(`/users/${currentUser.id}/`)
-            setCurrentUser(null)
-            navigate("/")
+            await api.delete(`/users/${currentUser.id}/`);
+
+            localStorage.removeItem("access");
+            localStorage.removeItem("refresh");
+            localStorage.removeItem("user");
+
+            setCurrentUser(null);
+            navigate("/");
+
         } catch (err) {
-            setError("Nie udało się usunąć konta. Spróbuj ponownie.")
+            const status = err.response?.status;
+
+            if (status === 401) {
+                setError("Brak autoryzacji.");
+            } else {
+                setError("Nie udało się usunąć konta. Spróbuj ponownie.");
+            }
         }
     }
 

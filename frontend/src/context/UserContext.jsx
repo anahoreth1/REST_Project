@@ -2,28 +2,30 @@ import { createContext, useEffect, useState } from "react";
 
 export const UserContext = createContext({
   currentUser: null,
-  setCurrentUser: () => {},
+  setCurrentUser: () => { },
 });
 
 export function UserProvider({ children }) {
   const [currentUser, setCurrentUserState] = useState(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("auctionUser");
+    const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
         setCurrentUserState(JSON.parse(storedUser));
       } catch (error) {
-        localStorage.removeItem("auctionUser");
+        localStorage.removeItem("user");
       }
     }
   }, []);
 
   const setCurrentUser = (user) => {
     if (user) {
-      localStorage.setItem("auctionUser", JSON.stringify(user));
+      localStorage.setItem("user", JSON.stringify(user));
     } else {
-      localStorage.removeItem("auctionUser");
+      localStorage.removeItem("user");
+      localStorage.removeItem("access");
+      localStorage.removeItem("refresh");
     }
     setCurrentUserState(user);
   };

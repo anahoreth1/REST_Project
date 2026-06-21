@@ -24,19 +24,27 @@ function LoginPage() {
   }, [])
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
     try {
       const response = await api.post("/users/login/", {
         email,
-        password
-      })
+        password,
+      });
 
-      setCurrentUser(response.data)
-      navigate("/")
+      const { user, access, refresh } = response.data;
+
+      localStorage.setItem("access", access);
+      localStorage.setItem("refresh", refresh);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      setCurrentUser(user);
+      navigate("/");
+
     } catch (err) {
       const status = err.response?.status;
+
       if (status === 401) {
         setError("Nieprawidłowe hasło.");
       } else if (status === 404) {

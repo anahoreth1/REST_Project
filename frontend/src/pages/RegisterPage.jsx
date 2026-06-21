@@ -22,40 +22,44 @@ export default function Register() {
       return
     }
 
-  try {
-    const res = await api.post("/users/", {
-      name,
-      email,
-      password
-    });
+    try {
+      const res = await api.post("/users/", {
+        name,
+        email,
+        password
+      });
 
-    const user = res.data;
+      const { user, access, refresh } = res.data;
 
-    if (user?.id) {
+      if (access) {
+        localStorage.setItem("access", access);
+        localStorage.setItem("refresh", refresh);
+        localStorage.setItem("user", JSON.stringify(user));
+
         setCurrentUser(user);
         navigate("/");
       } else {
         setMessage("Użytkownik utworzony. Zaloguj się poprzez email.");
       }
-  } catch (err) {
-    if (err.response) {
-      switch (err.response.status) {
-        case 400:
-          setError("Nieprawidłowe dane.");
-          break;
-        case 409:
-          setError("Użytkownik z takim emailem już istnieje.");
-          break;
-        case 500:
-          setError("Błąd serwera. Spróbuj później.");
-          break;
-        default:
-          setError("Nie udało się zarejestrować.");
+    } catch (err) {
+      if (err.response) {
+        switch (err.response.status) {
+          case 400:
+            setError("Nieprawidłowe dane.");
+            break;
+          case 409:
+            setError("Użytkownik z takim emailem już istnieje.");
+            break;
+          case 500:
+            setError("Błąd serwera. Spróbuj później.");
+            break;
+          default:
+            setError("Nie udało się zarejestrować.");
+        }
+      } else {
+        setError("Brak połączenia z serwerem.");
       }
-    } else {
-      setError("Brak połączenia z serwerem.");
     }
-  }
   }
 
   return (
